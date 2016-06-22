@@ -1,5 +1,7 @@
 (ns forced
   (:require
+    [forced.auth.oauth2 :refer [authenticate!]]
+    [clojure.edn :as edn]
     [clojure.spec :as spec]
     [manifold.stream :as s]
     [manifold.deferred :as d]))
@@ -40,5 +42,12 @@
     state))
 
 
+(comment
 
+  (def system (start! (edn/read-string (slurp "config.edn"))))
+  (authenticate! system)
+
+  (def bar (keys (:body @foo)))
+
+  )
 

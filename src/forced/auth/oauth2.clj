@@ -1,6 +1,7 @@
 (ns forced.auth.oauth2
   (:require
     [manifold.deferred :as d]
+    [manifold.time :as t]
     [cheshire.core :as json]
     [forced.http :refer [rest-request]]))
 
@@ -37,3 +38,30 @@
   (d/chain
     (rest-request (access-token-request @(:auth system)))
     (partial update-oauth2-session! system)))
+
+(defn stop-reauth-cron!
+  [system]
+  (d/future
+    (swap!
+      (fn [stop-task-fn!]
+        (when stop-task-fn! (stop-task-fn!))
+        :forced/task-stopped)
+      (get-in system [:tasks :re-auth]))
+    system))
+
+(defn start-reauth-cron!
+  [system]
+  (d/future
+    (swap!
+      system
+      assoc-in
+      [:tasks :re-auth]
+      (t/every (+ (t/hours 1) (t/minutes 55))
+               (partial authenticate! system)))
+    system))
+
+(defn restart-reauth-cron!
+  [system]
+  (d/chain
+    (stop-reauth-cron! system)
+    (start-reauth-cron!)))
