@@ -28,6 +28,7 @@ TODO: Finish this README.
 ## License
 
 Copyright © 2016 VLACS <jdoane@vlacs.org>
+
 Copyright © 2016 Jon Doane <jrdoane@gmail.com>
 
 Distributed under the Eclipse Public License either version 1.0 or (at
