@@ -40,21 +40,5 @@
     state))
 
 
-(comment
-  
-  (def system
-    (start!
-      {:auth-endpoint authentication-endpoint
-       :client-id "3MVG9zZht._ZaMunIw02Zmy.qMz.uPoLjx5RSxCrRzCAuQ1OmjgYFCHj4CWdYJKx3f0ONtbmZJQRjSSZjxzG0"
-       :client-secret "6977983750432806032"
-       :username "sysadmin@vlacs.org.release"
-       :password "ieghieth0sheeMie2yeo5thouTeequohcheshiefieDaequoorah1sieRuthou9o"
-       }
-      ))
 
-  (def foo (forced.auth.oauth2/authenticate! system))
-
-  (def bar (keys (:body @foo)))
-
-  )
 
