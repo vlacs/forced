@@ -13,15 +13,16 @@
 
 (defn wrap-json
   [response]
-  (if (= (get-in response [:headers "content-type"])
-         "application/json")
-    (update-in response [:body] keyword-json)
-    response))
+  (if (re-matches 
+        #"application\/json.*"
+        (get-in response [:headers :content-type]))
+    (update-in response [:body] keyword-json) response))
 
 (defn rest-request
   "This function wraps org.httpkit.client/request into a manifold deferred
   value which callbacks can be chained upon. This also includes some defaults
-  that Forced suggests if none are provided."
+  that Forced suggests if none are provided. It also automatically handles any
+  outgoing generating or parsing of JSON from request or response bodies."
   [http-opts]
   (d/chain
     (d/->deferred
@@ -29,7 +30,13 @@
         (merge
           {:user-agent *default-agent*
            :keepalive *default-keepalive*
-           :timeout *default-timeout*}
-          http-opts)))
+           :timeout *default-timeout*
+           :headers (when (:body http-opts)
+                      (merge
+                        {"content-type" "application/json"}  
+                        (:headers http-opts)))
+           :body (when (:body http-opts)
+                   (json/generate-string (:body http-opts)))}
+          (dissoc http-opts :headers))))
     wrap-json))
 
