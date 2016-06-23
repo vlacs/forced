@@ -5,6 +5,25 @@
     [manifold.stream :as s]
     [manifold.deferred :as d]))
 
+(defn make-url
+  [system & parts]
+  (apply
+    str
+    (interpose
+      "/"
+      (concat
+        [(:instance-url @(:oauth2-session system))]
+        parts))))
+
+(defn services-url
+  [system & parts]
+  (apply
+    (partial make-url system)
+    (concat
+      ["services" "data"
+       (deref (:api-version system))]
+      parts)))
+
 (def ^:dynamic *default-agent* "Forced 1.0 - Clojure 1.9-alpha3 (http-kit 2.1.18)")
 (def ^:dynamic *default-keepalive* 30000)
 (def ^:dynamic *default-timeout* 30000)

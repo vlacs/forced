@@ -34,12 +34,18 @@
   system)
 
 (defn authenticate!
+  "Authenticates the current instance with the credentials stored in the system
+  map and updates the oauth2-session atom. The return value of this function is
+  a deferred value representing the completion of this task by giving the
+  system map back."
   [system]
   (d/chain
     (rest-request (access-token-request @(:auth system)))
     (partial update-oauth2-session! system)))
 
 (defn stop-reauth-cron!
+  "Stops the recurring task of re-authentication if, it has been started.
+  It also swaps in a place-holder indicating that the task has been stopped."
   [system]
   (d/future
     (swap!
@@ -50,6 +56,8 @@
     system))
 
 (defn start-reauth-cron!
+  "Starts the re-authentication recurring task and stores the termination fn
+  into the atom representing this task in this instance."
   [system]
   (d/future
     (swap!
@@ -62,6 +70,9 @@
 
 (defn restart-reauth-cron!
   [system]
+  "Restarts the re-authentication service by stopping it (if it's running,)
+  then starting it back up again."
   (d/chain
     (stop-reauth-cron! system)
     (start-reauth-cron!)))
+
