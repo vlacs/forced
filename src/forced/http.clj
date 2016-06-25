@@ -5,7 +5,7 @@
     [manifold.stream :as s]
     [manifold.deferred :as d]))
 
-(defn make-url
+(defn finish-url-str
   [system & parts]
   (apply
     str
@@ -15,14 +15,12 @@
         [(:instance-url @(:oauth2-session system))]
         parts))))
 
-(defn services-url
+(defn services-uri
   [system & parts]
-  (apply
-    (partial make-url system)
-    (concat
-      ["services" "data"
-       (deref (:api-version system))]
-      parts)))
+  (concat
+    ["services" "data"
+     (deref (:api-version system))]
+    parts))
 
 (def ^:dynamic *default-agent* "Forced 1.0 - Clojure 1.9-alpha3 (http-kit 2.1.18)")
 (def ^:dynamic *default-keepalive* 30000)
@@ -58,4 +56,15 @@
                    (json/generate-string (:body http-opts)))}
           (dissoc http-opts :headers))))
     wrap-json))
+
+(defn authentication-str
+  [system]
+  (str "Bearer " (:access-token @(:oauth2-session system))))
+
+(defn make-system-rest-request-fn
+  [system]
+  (fn system-rest-request
+    [http-opts]
+    (assoc-in http-opts [:headers "Authorization"]
+              (authentication-str system))))
 

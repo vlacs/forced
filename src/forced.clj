@@ -1,7 +1,7 @@
 (ns forced
   (:require
-    [forced.auth.oauth2 :refer [authenticate!]]
-    [forced.http]
+    [forced.auth.oauth2 :refer [start-reauth-cron!]]
+    [forced.http :refer [make-system-rest-request-fn]]
     [clojure.edn :as edn]
     [clojure.spec :as spec]
     [manifold.stream :as s]
@@ -21,8 +21,7 @@
    :api-version (atom "v36.0")
    :oauth2-session
    (atom
-     {:token nil
-      :issued-at nil
+     {:issued-at nil
       :instance-url nil
       :signature nil
       :access-token nil})
@@ -42,13 +41,19 @@
      :password password})
   system)
 
+(defn add-system-fns
+  [system]
+  (assoc
+    system
+    :rest-request (make-system-rest-request-fn system)))
+
 (defn start!
   [credentials]
   (d/chain
     (d/future [(skeleton) credentials])
     set-credentials!
-    authenticate!))
-
+    start-reauth-cron!
+    add-system-fns))
 
 (comment
 
