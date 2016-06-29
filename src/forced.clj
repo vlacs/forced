@@ -7,8 +7,6 @@
     [manifold.stream :as s]
     [manifold.deferred :as d]))
 
-(def authentication-endpoint "https://test.salesforce.com/services/oauth2/token")
-
 (defn skeleton
   []
   {:auth
