@@ -5,6 +5,8 @@
     [cheshire.core :as json]
     [forced.http :refer [rest-request]]))
 
+(def ^:dynamic *default-reauth-interval* (+ (t/hours 1) (t/minutes 55)))
+
 (defn access-token-request
   [{:keys [endpoint client-id secret username password]}]
   {:url endpoint
@@ -60,12 +62,11 @@
   into the atom representing this task in this instance."
   [system]
   (d/future
-    (swap!
-      system
-      assoc-in
-      [:tasks :re-auth]
-      (t/every (+ (t/hours 1) (t/minutes 55))
-               (partial authenticate! system)))
+    (reset!
+      (get-in system [:tasks :re-auth])
+      (t/every 
+        *default-reauth-interval*
+        (partial authenticate! system)))
     system))
 
 (defn restart-reauth-cron!
