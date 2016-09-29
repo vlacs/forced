@@ -3,7 +3,7 @@
     [manifold.deferred :as d]
     [manifold.time :as t]
     [cheshire.core :as json]
-    [forced.http :refer [rest-request]]))
+    [forced.http :refer [raw-request]]))
 
 (def ^:dynamic *default-reauth-interval* (+ (t/hours 1) (t/minutes 55)))
 
@@ -28,11 +28,12 @@
   [system response]
   (let [{:keys [body status]} response]
     (when (= status 200)
-      (reset!
-        (:oauth2-session system)
-        (apply
-          hash-map
-          (mapcat clean-key body)))))
+      (dosync
+        (ref-set
+          (:oauth2-session system)
+          (apply
+            hash-map
+            (mapcat clean-key body))))))
   system)
 
 (defn authenticate!
@@ -42,7 +43,7 @@
   system map back."
   [system]
   (d/chain
-    (rest-request (access-token-request @(:auth system)))
+    (raw-request (access-token-request @(:auth system)))
     (partial update-oauth2-session! system)))
 
 (defn stop-reauth-cron!
@@ -62,11 +63,12 @@
   into the atom representing this task in this instance."
   [system]
   (d/future
-    (reset!
-      (get-in system [:tasks :re-auth])
-      (t/every 
-        *default-reauth-interval*
-        (partial authenticate! system)))
+    (dosync
+      (ref-set
+        (get-in system [:tasks :re-auth])
+        (t/every 
+          *default-reauth-interval*
+          (partial authenticate! system))))
     system))
 
 (defn restart-reauth-cron!

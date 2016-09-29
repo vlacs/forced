@@ -5,8 +5,13 @@
     [manifold.stream :as s]
     [manifold.deferred :as d]))
 
+(def ^:dynamic *default-agent* "Forced 1.0 - Clojure 1.9-alpha3 (http-kit 2.1.18)")
+(def ^:dynamic *default-keepalive* 30000)
+(def ^:dynamic *default-timeout* 30000)
+(def ^:dynamic *api-version* "v37.0")
+
 (defn finish-url-str
-  [system & parts]
+  [system parts]
   (apply
     str
     (interpose
@@ -16,26 +21,23 @@
         parts))))
 
 (defn services-uri
-  [system & parts]
+  [system parts]
   (concat
-    ["services" "data"
-     (deref (:api-version system))]
+    ["services" "data" @(:api-version system)]
     parts))
-
-(def ^:dynamic *default-agent* "Forced 1.0 - Clojure 1.9-alpha3 (http-kit 2.1.18)")
-(def ^:dynamic *default-keepalive* 30000)
-(def ^:dynamic *default-timeout* 30000)
 
 (defn keyword-json [response] (json/parse-string response true))
 
 (defn wrap-json
   [response]
-  (if (re-matches 
-        #"application\/json.*"
-        (get-in response [:headers :content-type]))
-    (update-in response [:body] keyword-json) response))
+  (let
+    [content-type (get-in response [:headers :content-type])]
+    (if (and
+          (string? content-type)
+          (re-matches #"application\/json.*" content-type))
+      (update-in response [:body] keyword-json) response)))
 
-(defn rest-request
+(defn raw-request
   "This function wraps org.httpkit.client/request into a manifold deferred
   value which callbacks can be chained upon. This also includes some defaults
   that Forced suggests if none are provided. It also automatically handles any
@@ -54,17 +56,24 @@
                         (:headers http-opts)))
            :body (when (:body http-opts)
                    (json/generate-string (:body http-opts)))}
-          (dissoc http-opts :headers))))
+          http-opts)))
     wrap-json))
 
 (defn authentication-str
   [system]
   (str "Bearer " (:access-token @(:oauth2-session system))))
 
+(defn request-with-auth
+  [system http-opts]
+  (-> http-opts
+      (assoc-in [:headers "Authorization"]
+                (authentication-str system))
+      (update-in [:url] (partial finish-url-str system))
+      (raw-request)))
+
 (defn make-system-rest-request-fn
   [system]
   (fn system-rest-request
     [http-opts]
-    (assoc-in http-opts [:headers "Authorization"]
-              (authentication-str system))))
+    (request-with-auth system http-opts)))
 
