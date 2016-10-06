@@ -6,4 +6,5 @@
   :dependencies [[org.clojure/clojure "1.9.0-alpha3"]
                  [http-kit "2.1.18"]
                  [manifold "0.1.4"]
-                 [cheshire "5.6.2"]])
+                 [cheshire "5.6.2"]
+                 [clj-time "0.12.0"]])

@@ -20,7 +20,7 @@
    :api-version (ref "v36.0")
    :cache
    {:sobject-list
-    {:store (ref {})
+    {:store (ref (list))
      :last-update (ref nil)}
     :sobject-metadata
     {:store (ref {})
